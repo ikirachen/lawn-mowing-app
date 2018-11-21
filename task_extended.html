@@ -1,0 +1,235 @@
+<html>
+    <head></head>
+    <body>
+    <span>
+        For the sake of simplicity, the task is implemented in the current html file. The code is in the sole script tag. It clear that in real world scenario the JS code should be extracted in separate file or files.
+        Actually every constructor function (Lawn, Gardener, Mower, InstructionParser) is good candidate for ES6 or Typescript module.
+    </span>
+    <br/>
+    <h4>Instructions</h4>
+    <span>
+        The textarea bellow is used as an input for the task. Its default value is take from the requirement. Test button runs the program. The output is printed above the test button.
+        Currently the program supports only 2 mowers (as it is required). If we have change request for more - only the InstructionParser should be changed.
+    </span>
+    <br/>
+    <span>Input:</span>
+    <br/>
+    <textarea id='inputData' rows="10" cols="25" text="">
+    </textarea>
+    <br/>
+    <span>Output:</span>
+    <br/>
+    <span id='output'></span>
+    <br/>
+    <button id='btnTest'>
+        Test
+    </button>
+    </body>
+    <script type="text/javascript">
+        let utils = {  
+                NEW_LINE_CHAR: '\n',
+                WHITE_SPACE: ' ',
+                calculateNewOrientation: function(command, orientation) {
+                    switch(command){
+                        case 'F': {//going forward, keep the current orientation
+                            return orientation;
+                        }
+                        case 'R':{//turning Right
+                            switch(orientation)
+                            {
+                                case 'N':
+                                    return 'E';
+                                case 'E':
+                                    return 'S'
+                                case 'S':
+                                    return 'W';
+                                case 'W':
+                                    return 'N';
+                                default:
+                                    return 'not recognized orientation';
+                            }
+                        }
+                        case 'L':{//turning Left
+                            switch(orientation)
+                            {
+                                case 'N':
+                                    return 'W';
+                                case 'E':
+                                    return 'N'
+                                case 'S':
+                                    return 'E';
+                                case 'W':
+                                    return 'S';  
+                                default:
+                                    return 'not recognized orientation';  
+                            }
+                        }
+                        default:
+                            return 'not recognized command';
+                    }
+                },
+                calculatenNewPosition: function(orientation, oldPosition) {
+                    switch (orientation) {
+                        case 'N':
+                            {
+                                return { x:oldPosition.x, y:oldPosition.y+1 };    
+                            }
+                        case 'E':
+                            {
+                                return { x:oldPosition.x+1, y:oldPosition.y };    
+                            }
+                        case 'S':
+                            {
+                                return { x:oldPosition.x, y:oldPosition.y-1 }
+                            }
+                         case 'W':
+                            {
+                                return { x:oldPosition.x-1, y:oldPosition.y };
+                            }
+                            default:
+                                    return 'not recognized orientation';  
+                    }
+                }
+             };
+
+        // Encapsulates the logic for parsing of the instructions from the requirement.
+        // The current implementation parses instruction for only 2 mowers.
+        function InstructionParser(instrictions) {
+
+            let LAWN_INSTR_LINE_INDEX = 0;
+
+            let mowerOnePositionInstructionIndex = LAWN_INSTR_LINE_INDEX + 1
+            let mowerOneMoveInstructionIndex = LAWN_INSTR_LINE_INDEX + 2;
+
+            let mowerTwoPositionInstructionIndex = LAWN_INSTR_LINE_INDEX + 3
+            let mowerTwoMoveInstructionIndex = LAWN_INSTR_LINE_INDEX + 4;
+
+            let lines = instrictions.split(utils.NEW_LINE_CHAR);
+            let rawLawnSize = lines[LAWN_INSTR_LINE_INDEX].split(utils.WHITE_SPACE);
+
+            this.lawnSize = {
+                                width: parseInt(rawLawnSize[0]),
+                                height: parseInt(rawLawnSize[1])
+                            };
+
+            let mowerOnePositionRaw =lines[mowerOnePositionInstructionIndex].split(utils.WHITE_SPACE);
+            let mowerTwoPositionRaw =lines[mowerTwoPositionInstructionIndex].split(utils.WHITE_SPACE);
+
+            this.mowerOne = {
+                                position:{
+                                    x: parseInt(mowerOnePositionRaw[0]),
+                                    y: parseInt(mowerOnePositionRaw[1])
+                                },
+                                orientation: mowerOnePositionRaw[2],
+                                instructions: lines[mowerOneMoveInstructionIndex]
+                            };
+
+            this.mowerTwo = {
+                                position:{
+                                    x: parseInt(mowerTwoPositionRaw[0]),
+                                    y: parseInt(mowerTwoPositionRaw[1])
+                                },
+                                orientation: mowerTwoPositionRaw[2],
+                                instructions: lines[mowerTwoMoveInstructionIndex]
+                            };                
+        }
+
+        //Represent "lawn" which the gardeners should mow, hold its size  
+        function Lawn(size) {
+            this.size = size;
+        }
+
+        //Represents the mower, encapsulates its state and instructions and implements the behaviours 
+        function Mower(options) {
+            let orientation = options.orientation;
+            let position = options.position;
+            let instructions = options.instructions;//we assume that this is modern IoT mower so the Gardener will read the instructions from its display;
+
+            this.move = function (newPosition) {
+                position = newPosition;
+            }
+
+            this.getInstructions = function() {
+                return instructions;
+            }
+
+            this.getOrientation = function() {
+                return orientation;
+            }
+
+            this.setOrientation = function(newOrientation) {
+                orientation = newOrientation;
+            }
+
+            this.getPostion = function() {
+                return position;
+            }
+
+            this.toString = function() {
+                return position.x + utils.WHITE_SPACE + position.y + utils.WHITE_SPACE + orientation; 
+            }
+        }
+
+        //Represent class which holds one lawn and one mower. Encapsulates the logic for mowing the lawn 
+        function Gardener(options) {
+            let lawn = options.lawn;
+            let mower = options.mower;
+
+            function isValidPosition(position) {
+                return  position.x >=0 && position.y >=0 &&
+                        (lawn.size.width - position.x) >= 0 && 
+                        (lawn.size.height - position.y) >= 0 
+            }
+
+            this.getMower = function () {
+                return mower;
+            }
+
+            this.mow = function () {
+                let instr = mower.getInstructions();
+                for(let i=0; i<instr.length; i++) {
+                    if(instr.charAt(i) ==='F') {
+                        let currentPosition = mower.getPostion();
+                        let orientation = mower.getOrientation();
+                        let newPosition = utils.calculatenNewPosition(orientation, currentPosition);
+                        if(isValidPosition(newPosition))
+                            mower.move(newPosition);
+                    } else {
+                        let newOrientation = utils.calculateNewOrientation(instr.charAt(i), mower.getOrientation());
+                        mower.setOrientation(newOrientation);
+                    }
+                }
+            }
+        }
+
+        //Plays the scenaria from the requirement
+        function Test(input) {
+            let _self= this;
+            let testInstructions = input || "5 5\n1 2 N\nLFLFLFLFF\n3 3 E\nFFRFFRFRRF";// test isntruction from the requirement.
+
+            _self.instructions = new InstructionParser(testInstructions);
+            _self.lawn = new Lawn(_self.instructions.lawnSize);
+            _self.mowerOne = new Mower(_self.instructions.mowerOne);
+            _self.mowerTwo = new Mower(_self.instructions.mowerTwo);
+            _self.gardenerOne = new Gardener({lawn: _self.lawn, mower: _self.mowerOne});
+            _self.gardenerOne.mow();
+            _self.gardenerTwo = new Gardener({lawn: _self.lawn, mower: _self.mowerTwo});
+            _self.gardenerTwo.mow();
+            _self.output = _self.mowerOne.toString() + utils.NEW_LINE_CHAR + _self.mowerTwo.toString();
+        }
+
+        function init(){
+            document.getElementById('inputData').value = "5 5\n1 2 N\nLFLFLFLFF\n3 3 E\nFFRFFRFRRF"
+        }
+
+        window.onload = function() {
+            init();
+            let btn = document.getElementById('btnTest');
+            btn.onclick = function() {
+                let textArea = document.getElementById('inputData');
+                let test = new Test(textArea.value);
+                document.getElementById('output').innerText = test.output;
+            }
+        }
+    </script>
+</html>
