@@ -15,6 +15,10 @@ Example:
 1 3 N  
 5 1 E  
 
+Deployed to:
+https://lawn-mowing.herokuapp.com/
+
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.0.4.
 
 ## Development server
