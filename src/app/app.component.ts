@@ -10,7 +10,10 @@ export class AppComponent {
   public title: string;
   public message: string;
   public messageStyles: Object;
-  private outputFileName = 'output.txt';
+ 
+  public outputFileName = 'output.txt';
+  public downLoadLinkId = 'downLoadLink';
+
   private successMessage = 'Mowing succeeded !';
 
   constructor(private lawnMowingService: LawnMowingService) {
@@ -29,12 +32,12 @@ export class AppComponent {
 
           const output = this.lawnMowingService.mow(fileReader.result.toString());
           const blob = new Blob([output]);
-          const a = document.createElement('a');
-
+          const a = <HTMLAnchorElement>document.getElementById(this.downLoadLinkId);
+          
           a.href = URL.createObjectURL(blob);
           a.download = this.outputFileName;
-
           a.click();
+
           this.message = this.successMessage;
           this.messageStyles = this.getSuccessMessgageStyles();
 
